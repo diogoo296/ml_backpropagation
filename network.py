@@ -44,15 +44,50 @@ class NeuralNetwork:
 
         return inputs
 
-# test forward propagation
+    # Calculate the derivative of an neuron output
+    def transferDerivative(self, output):
+        return output * (1.0 - output)
+
+    # Backpropagate error and store in neurons
+    def backPropagate(self, expected):
+        for i in reversed(range(len(self.layers))):
+            layer = self.layers[i]
+            errors = list()
+            if i != len(self.layers) - 1:
+                for j in range(len(layer)):
+                    error = 0.0
+                    for neuron in self.layers[i + 1]:
+                        error += (neuron['weights'][j] * neuron['delta'])
+
+                    errors.append(error)
+            else:
+                for j in range(len(layer)):
+                    neuron = layer[j]
+                    errors.append(expected[j] - neuron['output'])
+
+            for j in range(len(layer)):
+                neuron = layer[j]
+                neuron['delta'] = (
+                    errors[j] * self.transferDerivative(neuron['output'])
+                )
+
+# test backpropagation
 seed(1)
 neuralNet = NeuralNetwork(1, 2, 2)
 neuralNet.layers = [
-    [{'weights': [0.13436424411240122, 0.8474337369372327, 0.763774618976614]}],
+    [{'output': 0.7105668883115941, 'weights': [
+        0.13436424411240122, 0.8474337369372327, 0.763774618976614
+    ]}],
     [
-        {'weights': [0.2550690257394217, 0.49543508709194095]},
-        {'weights': [0.4494910647887381, 0.651592972722763]}
+        {'output': 0.6213859615555266, 'weights': [
+            0.2550690257394217, 0.49543508709194095
+        ]},
+        {'output': 0.6573693455986976, 'weights': [
+            0.4494910647887381, 0.651592972722763
+        ]}
     ]
 ]
-row = [1, 0, None]
-print(neuralNet.forwardPropagate(row))
+expected = [0, 1]
+neuralNet.backPropagate(expected)
+for layer in neuralNet.layers:
+    print(layer)

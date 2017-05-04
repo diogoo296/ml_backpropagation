@@ -71,23 +71,57 @@ class NeuralNetwork:
                     errors[j] * self.transferDerivative(neuron['output'])
                 )
 
+    # Update network weights with error
+    def updateWeights(self, row, learningRate):
+        for i in range(len(self.layers)):
+            inputs = row[:-1]
+            if i != 0:
+                inputs = [neuron['output'] for neuron in self.layers[i - 1]]
+
+            for neuron in self.layers[i]:
+                for j in range(len(inputs)):
+                    neuron['weights'][j] += (
+                        learningRate * neuron['delta'] * inputs[j]
+                    )
+
+                neuron['weights'][-1] += learningRate * neuron['delta']
+
+    # Train a network for a fixed number of epochs
+    def train(self, trainingSet, learningRate, numEpochs, numOutputs):
+        for epoch in range(numEpochs):
+            errorSum = 0
+            for row in trainingSet:
+                outputs = self.forwardPropagate(row)
+                expected = [0 for i in range(numOutputs)]
+                expected[row[-1]] = 1
+                errorSum += sum([
+                    (expected[i] - outputs[i])**2 for i in range(len(expected))
+                ])
+                self.backPropagate(expected)
+                self.updateWeights(row, learningRate)
+
+            print('>epoch=%d, lrate=%.3f, error=%.3f' % (
+                epoch, learningRate, errorSum
+            ))
+
+
 # test backpropagation
 seed(1)
-neuralNet = NeuralNetwork(1, 2, 2)
-neuralNet.layers = [
-    [{'output': 0.7105668883115941, 'weights': [
-        0.13436424411240122, 0.8474337369372327, 0.763774618976614
-    ]}],
-    [
-        {'output': 0.6213859615555266, 'weights': [
-            0.2550690257394217, 0.49543508709194095
-        ]},
-        {'output': 0.6573693455986976, 'weights': [
-            0.4494910647887381, 0.651592972722763
-        ]}
-    ]
+dataset = [
+    [2.7810836, 2.550537003, 0],
+    [1.465489372, 2.362125076, 0],
+    [3.396561688, 4.400293529, 0],
+    [1.38807019, 1.850220317, 0],
+    [3.06407232, 3.005305973, 0],
+    [7.627531214, 2.759262235, 1],
+    [5.332441248, 2.088626775, 1],
+    [6.922596716, 1.77106367, 1],
+    [8.675418651, -0.242068655, 1],
+    [7.673756466, 3.508563011, 1]
 ]
-expected = [0, 1]
-neuralNet.backPropagate(expected)
+n_inputs = len(dataset[0]) - 1
+n_outputs = len(set([row[-1] for row in dataset]))
+neuralNet = NeuralNetwork(n_inputs, 2, n_outputs)
+neuralNet.train(dataset, 0.5, 1000, n_outputs)
 for layer in neuralNet.layers:
     print(layer)

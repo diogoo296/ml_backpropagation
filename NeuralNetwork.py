@@ -4,18 +4,23 @@ from math import exp
 
 
 class NeuralNetwork:
-    def __init__(self, numInputs, numHiddenLayers, numOutputs):
+    NUM_INPUTS = 784
+    NUM_OUTPUTS = 10
+
+    def __init__(self, numHiddenLayers, learningRate, numEpochs):
         self.layers = list()
+        self.learningRate = learningRate
+        self.numEpochs = numEpochs
 
         hiddenLayer = [
-            {'weights': [random() for i in range(numInputs + 1)]}
+            {'weights': [random() for i in range(self.NUM_INPUTS + 1)]}
             for i in range(numHiddenLayers)
         ]
         self.layers.append(hiddenLayer)
 
         outputLayer = [
             {'weights': [random() for i in range(numHiddenLayers + 1)]}
-            for i in range(numOutputs)
+            for i in range(self.NUM_OUTPUTS)
         ]
         self.layers.append(outputLayer)
 
@@ -72,7 +77,7 @@ class NeuralNetwork:
                 )
 
     # Update network weights with error
-    def updateWeights(self, row, learningRate):
+    def updateWeights(self, row):
         for i in range(len(self.layers)):
             inputs = row[:-1]
             if i != 0:
@@ -81,47 +86,25 @@ class NeuralNetwork:
             for neuron in self.layers[i]:
                 for j in range(len(inputs)):
                     neuron['weights'][j] += (
-                        learningRate * neuron['delta'] * inputs[j]
+                        self.learningRate * neuron['delta'] * inputs[j]
                     )
 
-                neuron['weights'][-1] += learningRate * neuron['delta']
+                neuron['weights'][-1] += self.learningRate * neuron['delta']
 
     # Train a network for a fixed number of epochs
-    def train(self, trainingSet, learningRate, numEpochs, numOutputs):
-        for epoch in range(numEpochs):
+    def train(self, trainingSet):
+        for epoch in range(self.numEpochs):
             errorSum = 0
             for row in trainingSet:
                 outputs = self.forwardPropagate(row)
-                expected = [0 for i in range(numOutputs)]
+                expected = [0 for i in range(self.NUM_OUTPUTS)]
                 expected[row[-1]] = 1
                 errorSum += sum([
                     (expected[i] - outputs[i])**2 for i in range(len(expected))
                 ])
                 self.backPropagate(expected)
-                self.updateWeights(row, learningRate)
+                self.updateWeights(row)
 
             print('>epoch=%d, lrate=%.3f, error=%.3f' % (
-                epoch, learningRate, errorSum
+                epoch, self.learningRate, errorSum
             ))
-
-
-# test backpropagation
-seed(1)
-dataset = [
-    [2.7810836, 2.550537003, 0],
-    [1.465489372, 2.362125076, 0],
-    [3.396561688, 4.400293529, 0],
-    [1.38807019, 1.850220317, 0],
-    [3.06407232, 3.005305973, 0],
-    [7.627531214, 2.759262235, 1],
-    [5.332441248, 2.088626775, 1],
-    [6.922596716, 1.77106367, 1],
-    [8.675418651, -0.242068655, 1],
-    [7.673756466, 3.508563011, 1]
-]
-n_inputs = len(dataset[0]) - 1
-n_outputs = len(set([row[-1] for row in dataset]))
-neuralNet = NeuralNetwork(n_inputs, 2, n_outputs)
-neuralNet.train(dataset, 0.5, 1000, n_outputs)
-for layer in neuralNet.layers:
-    print(layer)

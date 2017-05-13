@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from random import random, seed
-from math import exp
+from random import random
+from math import exp, log
+import numpy as np
 
 
 class NeuralNetwork:
@@ -49,9 +50,31 @@ class NeuralNetwork:
 
         return inputs
 
+    def softmax(self):
+        output = self.layers[len(self.layers - 1)]
+        return np.exp(output) / float(sum(np.exp(output)))
+
+    def oneHotEncoding(expected):
+        maxIdx = 9
+        # Allocate the output labels, all zeros.
+        encoded = [0 for i in range(maxIdx + 1)]
+        encoded[expected] = 1
+
+        return encoded
+
     # Calculate the derivative of an neuron output
     def transferDerivative(self, output):
         return output * (1.0 - output)
+
+    def calculateLoss(self, expected):
+        output = self.layers[len(self.layers) - 1]
+        error = 0.0
+        for i in self.NUM_OUTPUTS:
+            e1 = (-1) * expected[i] * log(output[i], 10)
+            e2 = (1 - expected[i]) * log(1 - output[i], 10)
+            error = e1 - e2
+
+        return error
 
     # Backpropagate error and store in neurons
     def backPropagate(self, expected):
@@ -68,6 +91,9 @@ class NeuralNetwork:
             else:
                 for j in range(len(layer)):
                     neuron = layer[j]
+                    # errors.append(
+                    #     self.lossFunction(neuron['output'], expected[j])
+                    # )
                     errors.append(expected[j] - neuron['output'])
 
             for j in range(len(layer)):

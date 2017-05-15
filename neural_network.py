@@ -8,9 +8,9 @@ class NeuralNetwork:
     NUM_INPUTS = 784
     NUM_OUTPUTS = 10
 
-    def __init__(self, numHiddenLayers, learningRate, numEpochs):
+    def __init__(self, numHiddenLayers, lmbda, numEpochs):
         self.layers = list()
-        self.learningRate = learningRate
+        self.lmbda = lmbda
         self.numEpochs = numEpochs
 
         hiddenLayer = [
@@ -36,7 +36,7 @@ class NeuralNetwork:
     def transfer(self, activation):
         return 1.0 / (1.0 + exp(-activation))
 
-    # Forward propagate input to a network output
+    # Forward propagate input to network output
     def forwardPropagate(self, row):
         inputs = row
         for layer in self.layers:
@@ -48,18 +48,21 @@ class NeuralNetwork:
 
             inputs = newInputs
 
-        return inputs
+        self.outputs = inputs
 
     def softmax(self):
-        output = self.layers[len(self.layers - 1)]
-        return np.exp(output) / float(sum(np.exp(output)))
+        self.outputs = np.exp(self.outputs) / float(sum(np.exp(self.outputs)))
+        # self.outputs = (
+        #    np.exp(self.outputs) / np.sum(np.exp(self.outputs), axis=0)
+        # )
+        # return result
+        # for i in range(self.NUM_OUTPUTS):
+        #    self.layers[len(self.layers) - 1][i]['output'] = result[i]
 
-    def oneHotEncoding(expected):
+    def oneHotEncoding(self, expected):
         maxIdx = 9
-        # Allocate the output labels, all zeros.
-        encoded = [0 for i in range(maxIdx + 1)]
-        encoded[expected] = 1
-
+        encoded = [0.0 for i in range(maxIdx + 1)]
+        encoded[expected] = 1.0
         return encoded
 
     # Calculate the derivative of an neuron output
@@ -67,12 +70,14 @@ class NeuralNetwork:
         return output * (1.0 - output)
 
     def calculateLoss(self, expected):
-        output = self.layers[len(self.layers) - 1]
+        # output = [l['output'] for l in self.layers[len(self.layers) - 1]]
+        self.softmax()
+        output = self.outputs
         error = 0.0
-        for i in self.NUM_OUTPUTS:
-            e1 = (-1) * expected[i] * log(output[i], 10)
-            e2 = (1 - expected[i]) * log(1 - output[i], 10)
-            error = e1 - e2
+        for i in range(self.NUM_OUTPUTS):
+            e1 = (-1.0) * expected[i] * log(output[i], 10)
+            e2 = (1.0 - expected[i]) * log(1 - output[i], 10)
+            error += e1 - e2
 
         return error
 
@@ -91,46 +96,80 @@ class NeuralNetwork:
             else:
                 for j in range(len(layer)):
                     neuron = layer[j]
-                    # errors.append(
-                    #     self.lossFunction(neuron['output'], expected[j])
-                    # )
                     errors.append(expected[j] - neuron['output'])
 
             for j in range(len(layer)):
                 neuron = layer[j]
+                # neuron['delta'] = errors[j]
                 neuron['delta'] = (
                     errors[j] * self.transferDerivative(neuron['output'])
                 )
 
     # Update network weights with error
-    def updateWeights(self, row):
+    def updateWeights(self, inputs):
         for i in range(len(self.layers)):
-            inputs = row[:-1]
             if i != 0:
                 inputs = [neuron['output'] for neuron in self.layers[i - 1]]
 
             for neuron in self.layers[i]:
                 for j in range(len(inputs)):
                     neuron['weights'][j] += (
-                        self.learningRate * neuron['delta'] * inputs[j]
+                        self.lmbda * neuron['delta'] * inputs[j]
                     )
 
-                neuron['weights'][-1] += self.learningRate * neuron['delta']
+                neuron['weights'][-1] += self.lmbda * neuron['delta']
+
+    def predict(self):
+        return np.argmax(self.outputs)
 
     # Train a network for a fixed number of epochs
-    def train(self, trainingSet):
+    def sgd(self, trainingSet):
         for epoch in range(self.numEpochs):
-            errorSum = 0
-            for row in trainingSet:
-                outputs = self.forwardPropagate(row)
-                expected = [0 for i in range(self.NUM_OUTPUTS)]
-                expected[row[-1]] = 1
-                errorSum += sum([
-                    (expected[i] - outputs[i])**2 for i in range(len(expected))
-                ])
+            lossSum = 0
+            correct = 0
+            # for row in trainingSet:
+            for k in range(trainingSet.size):
+                row = trainingSet.inputs[k]
+                expected = self.oneHotEncoding(trainingSet.outputs[k])
+
+                self.forwardPropagate(row)
+
+                lossSum += self.calculateLoss(expected)
+                prediction = self.predict()
+
+                if prediction == trainingSet.outputs[k]:
+                    correct += 1
+                # lossSum += sum(
+                # [(expected[i]-outputs[i])**2 for i in range(len(expected))]
+                # )
                 self.backPropagate(expected)
                 self.updateWeights(row)
 
-            print('>epoch=%d, lrate=%.3f, error=%.3f' % (
-                epoch, self.learningRate, errorSum
+            lossSum /= trainingSet.size
+
+            print('> epoch=%d, lrate=%.3f, error=%.3f' % (
+                epoch, self.lmbda, lossSum
+            ))
+            print('< score: %d/%d' % (correct, trainingSet.size))
+
+    def gd(self, trainingSet):
+        for epoch in range(self.numEpochs):
+            lossSum = 0
+            # for row in trainingSet:
+            for k in range(trainingSet.size):
+                row = trainingSet.inputs[k]
+                expected = self.oneHotEncoding(trainingSet.outputs[k])
+
+                self.forwardPropagate(row)
+                lossSum += self.calculateLoss(expected)
+                # lossSum += sum(
+                # [(expected[i]-outputs[i])**2 for i in range(len(expected))]
+                # )
+                self.backPropagate(expected)
+
+            lossSum /= trainingSet.size
+            self.updateWeights(row)
+
+            print('> epoch=%d, lrate=%.3f, error=%.3f' % (
+                epoch, self.lmbda, lossSum
             ))

@@ -9,6 +9,7 @@ class Dataset:
         self.inputs = list()
         self.outputs = list()
         self.load(filename)
+        self.size = len(self.outputs)
 
     def load(self, filename):
         with open(filename, 'r') as file:

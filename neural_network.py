@@ -51,7 +51,7 @@ class NeuralNetwork:
         self.outputs = inputs
 
     def softmax(self):
-        self.outputs = np.exp(self.outputs) / float(sum(np.exp(self.outputs)))
+        return np.exp(self.outputs) / float(sum(np.exp(self.outputs)))
         # self.outputs = (
         #    np.exp(self.outputs) / np.sum(np.exp(self.outputs), axis=0)
         # )
@@ -71,7 +71,6 @@ class NeuralNetwork:
 
     def calculateLoss(self, expected):
         # output = [l['output'] for l in self.layers[len(self.layers) - 1]]
-        self.softmax()
         output = self.outputs
         error = 0.0
         for i in range(self.NUM_OUTPUTS):
@@ -106,24 +105,29 @@ class NeuralNetwork:
                 )
 
     # Update network weights with error
-    def updateWeights(self, inputs):
+    def updateWeights(self, inputs, update=False, batchSize=1):
         for i in range(len(self.layers)):
             if i != 0:
                 inputs = [neuron['output'] for neuron in self.layers[i - 1]]
 
-            for neuron in self.layers[i]:
-                for j in range(len(inputs)):
-                    neuron['weights'][j] += (
-                        self.lmbda * neuron['delta'] * inputs[j]
-                    )
+            for j in range(len(self.layers[i])):
+                neuron = self.layers[i][j]
+                for k in range(len(inputs)):
+                    self.deltas[i][j] += neuron['delta'] * inputs[k]
+                    delta = self.deltas[i][j]
+                    if update:
+                        neuron['weights'][k] += self.lmbda * delta / batchSize
 
-                neuron['weights'][-1] += self.lmbda * neuron['delta']
+                self.deltas[i][-1] += neuron['delta']
+                delta = self.deltas[i][-1]
+                if update:
+                    neuron['weights'][-1] += self.lmbda * delta / batchSize
 
     def predict(self):
-        return np.argmax(self.outputs)
+        return np.argmax(self.softmax())
 
     # Train a network for a fixed number of epochs
-    def sgd(self, trainingSet):
+    def sgd2(self, trainingSet):
         for epoch in range(self.numEpochs):
             lossSum = 0
             correct = 0
@@ -139,9 +143,6 @@ class NeuralNetwork:
 
                 if prediction == trainingSet.outputs[k]:
                     correct += 1
-                # lossSum += sum(
-                # [(expected[i]-outputs[i])**2 for i in range(len(expected))]
-                # )
                 self.backPropagate(expected)
                 self.updateWeights(row)
 
@@ -152,24 +153,51 @@ class NeuralNetwork:
             ))
             print('< score: %d/%d' % (correct, trainingSet.size))
 
-    def gd(self, trainingSet):
+    def initDeltas(self):
+        self.deltas = list()
+        for i in range(len(self.layers)):
+            self.deltas.append([0] * len(self.layers[i]))
+
+    def batchGD(self, trainingSet, batchSize, sg=True):
         for epoch in range(self.numEpochs):
+            self.initDeltas()
             lossSum = 0
-            # for row in trainingSet:
+            correct = 0
+
             for k in range(trainingSet.size):
                 row = trainingSet.inputs[k]
                 expected = self.oneHotEncoding(trainingSet.outputs[k])
 
                 self.forwardPropagate(row)
+
                 lossSum += self.calculateLoss(expected)
-                # lossSum += sum(
-                # [(expected[i]-outputs[i])**2 for i in range(len(expected))]
-                # )
+                if self.predict() == trainingSet.outputs[k]:
+                    correct += 1
+
                 self.backPropagate(expected)
 
+                if (k + 1) % batchSize == 0:
+                    if sg:
+                        self.updateWeights(row, True)
+                    else:
+                        self.updateWeights(row, True, batchSize)
+
+                    self.initDeltas()
+                else:
+                    self.updateWeights(row)
+
             lossSum /= trainingSet.size
-            self.updateWeights(row)
 
             print('> epoch=%d, lrate=%.3f, error=%.3f' % (
                 epoch, self.lmbda, lossSum
             ))
+            print('< score: %d/%d' % (correct, trainingSet.size))
+
+    def gd(self, trainingSet):
+        self.batchGD(trainingSet, trainingSet.size, True)
+
+    def sgd(self, trainingSet):
+        self.batchGD(trainingSet, 1)
+
+    def miniBatch(self, trainingSet, batchSize):
+        self.batchGD(trainingSet, batchSize)

@@ -4,5 +4,5 @@ from neural_network import NeuralNetwork
 
 
 dataset = Dataset('data.csv')
-nn = NeuralNetwork(50, 10, 50)
+nn = NeuralNetwork(50, 1, 100)
 nn.sgd(dataset)

@@ -1,0 +1,154 @@
+> epoch=0, lrate=1.000, error=52.711
+< score: 489/5000
+> epoch=1, lrate=1.000, error=42.422
+< score: 489/5000
+> epoch=2, lrate=1.000, error=29.378
+< score: 489/5000
+> epoch=3, lrate=1.000, error=27.031
+< score: 489/5000
+> epoch=4, lrate=1.000, error=24.570
+< score: 489/5000
+> epoch=5, lrate=1.000, error=19.648
+< score: 489/5000
+> epoch=6, lrate=1.000, error=17.789
+< score: 489/5000
+> epoch=7, lrate=1.000, error=16.333
+< score: 489/5000
+> epoch=8, lrate=1.000, error=15.674
+< score: 489/5000
+> epoch=9, lrate=1.000, error=15.377
+< score: 489/5000
+> epoch=10, lrate=1.000, error=12.730
+< score: 489/5000
+> epoch=11, lrate=1.000, error=11.061
+< score: 485/5000
+> epoch=12, lrate=1.000, error=13.729
+< score: 500/5000
+> epoch=13, lrate=1.000, error=13.720
+< score: 500/5000
+> epoch=14, lrate=1.000, error=13.710
+< score: 500/5000
+> epoch=15, lrate=1.000, error=13.696
+< score: 500/5000
+> epoch=16, lrate=1.000, error=13.677
+< score: 500/5000
+> epoch=17, lrate=1.000, error=13.645
+< score: 500/5000
+> epoch=18, lrate=1.000, error=13.880
+< score: 501/5000
+> epoch=19, lrate=1.000, error=14.270
+< score: 460/5000
+> epoch=20, lrate=1.000, error=14.269
+< score: 460/5000
+> epoch=21, lrate=1.000, error=14.269
+< score: 460/5000
+> epoch=22, lrate=1.000, error=14.269
+< score: 460/5000
+> epoch=23, lrate=1.000, error=14.269
+< score: 460/5000
+> epoch=24, lrate=1.000, error=14.269
+< score: 460/5000
+> epoch=25, lrate=1.000, error=14.268
+< score: 460/5000
+> epoch=26, lrate=1.000, error=14.268
+< score: 460/5000
+> epoch=27, lrate=1.000, error=14.268
+< score: 460/5000
+> epoch=28, lrate=1.000, error=14.268
+< score: 460/5000
+> epoch=29, lrate=1.000, error=14.268
+< score: 460/5000
+> epoch=30, lrate=1.000, error=14.267
+< score: 460/5000
+> epoch=31, lrate=1.000, error=14.267
+< score: 460/5000
+> epoch=32, lrate=1.000, error=14.267
+< score: 460/5000
+> epoch=33, lrate=1.000, error=14.267
+< score: 460/5000
+> epoch=34, lrate=1.000, error=14.266
+< score: 460/5000
+> epoch=35, lrate=1.000, error=14.266
+< score: 460/5000
+> epoch=36, lrate=1.000, error=14.266
+< score: 460/5000
+> epoch=37, lrate=1.000, error=14.266
+< score: 460/5000
+> epoch=38, lrate=1.000, error=14.266
+< score: 460/5000
+> epoch=39, lrate=1.000, error=14.265
+< score: 460/5000
+> epoch=40, lrate=1.000, error=14.265
+< score: 460/5000
+> epoch=41, lrate=1.000, error=14.265
+< score: 460/5000
+> epoch=42, lrate=1.000, error=14.265
+< score: 460/5000
+> epoch=43, lrate=1.000, error=14.264
+< score: 460/5000
+> epoch=44, lrate=1.000, error=14.264
+< score: 460/5000
+> epoch=45, lrate=1.000, error=14.264
+< score: 460/5000
+> epoch=46, lrate=1.000, error=14.264
+< score: 460/5000
+> epoch=47, lrate=1.000, error=14.264
+< score: 460/5000
+> epoch=48, lrate=1.000, error=14.263
+< score: 460/5000
+> epoch=49, lrate=1.000, error=14.263
+< score: 460/5000
+> epoch=50, lrate=1.000, error=14.263
+< score: 460/5000
+> epoch=51, lrate=1.000, error=14.263
+< score: 460/5000
+> epoch=52, lrate=1.000, error=14.262
+< score: 460/5000
+> epoch=53, lrate=1.000, error=14.262
+< score: 460/5000
+> epoch=54, lrate=1.000, error=14.262
+< score: 460/5000
+> epoch=55, lrate=1.000, error=14.262
+< score: 460/5000
+> epoch=56, lrate=1.000, error=14.261
+< score: 460/5000
+> epoch=57, lrate=1.000, error=14.261
+< score: 460/5000
+> epoch=58, lrate=1.000, error=14.261
+< score: 460/5000
+> epoch=59, lrate=1.000, error=14.261
+< score: 460/5000
+> epoch=60, lrate=1.000, error=14.260
+< score: 460/5000
+> epoch=61, lrate=1.000, error=14.260
+< score: 460/5000
+> epoch=62, lrate=1.000, error=14.260
+< score: 460/5000
+> epoch=63, lrate=1.000, error=14.260
+< score: 460/5000
+> epoch=64, lrate=1.000, error=14.259
+< score: 460/5000
+> epoch=65, lrate=1.000, error=14.259
+< score: 460/5000
+> epoch=66, lrate=1.000, error=14.259
+< score: 460/5000
+> epoch=67, lrate=1.000, error=14.259
+< score: 460/5000
+> epoch=68, lrate=1.000, error=14.258
+< score: 460/5000
+> epoch=69, lrate=1.000, error=14.258
+< score: 460/5000
+> epoch=70, lrate=1.000, error=14.258
+< score: 460/5000
+> epoch=71, lrate=1.000, error=14.258
+< score: 460/5000
+> epoch=72, lrate=1.000, error=14.257
+< score: 460/5000
+> epoch=73, lrate=1.000, error=14.257
+< score: 460/5000
+> epoch=74, lrate=1.000, error=14.257
+< score: 460/5000
+> epoch=75, lrate=1.000, error=14.256
+< score: 460/5000
+> epoch=76, lrate=1.000, error=14.256
+< score: 460/5000

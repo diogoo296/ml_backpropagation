@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from csv import reader
+import numpy as np
 
 
 class Dataset:
@@ -10,6 +11,13 @@ class Dataset:
         self.outputs = list()
         self.load(filename)
         self.size = len(self.outputs)
+        self.dataToNumpy()
+
+    def dataToNumpy(self):
+        self.data = np.array(self.inputs)
+        self.data = [np.append(d, o) for d, o in zip(self.data, self.outputs)]
+        self.inputs = None
+        self.outputs = None
 
     def load(self, filename):
         with open(filename, 'r') as file:

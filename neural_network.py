@@ -1,203 +1,111 @@
 #!/usr/bin/env python
-from random import random
-from math import exp, log
 import numpy as np
+import random
 
 
 class NeuralNetwork:
     NUM_INPUTS = 784
     NUM_OUTPUTS = 10
+    NUM_LAYERS = 3
 
-    def __init__(self, numHiddenLayers, lmbda, numEpochs):
-        self.layers = list()
-        self.lmbda = lmbda
-        self.numEpochs = numEpochs
+    def __init__(self, numHiddenLayers, alpha, nEpochs):
+        sizes = [self.NUM_INPUTS, numHiddenLayers, self.NUM_OUTPUTS]
 
-        hiddenLayer = [
-            {'weights': [random() for i in range(self.NUM_INPUTS + 1)]}
-            for i in range(numHiddenLayers)
-        ]
-        self.layers.append(hiddenLayer)
+        self.b = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.W = [np.random.randn(y, x) / np.sqrt(x) for x, y in zip(sizes[:-1], sizes[1:])]
 
-        outputLayer = [
-            {'weights': [random() for i in range(numHiddenLayers + 1)]}
-            for i in range(self.NUM_OUTPUTS)
-        ]
-        self.layers.append(outputLayer)
+        self.alpha = alpha
+        self.nEpochs = nEpochs
 
-    def activate(self, weights, inputs):
-        activation = weights[-1]  # Bias
-        for i in range(len(weights) - 1):
-            activation += weights[i] * inputs[i]
+    def sigmoid(self, z):
+        return 1.0 / (1.0 + np.exp(-z))
 
-        return activation
+    def sigmoidPrime(self, z):
+        return self.sigmoid(z) * (1 - self.sigmoid(z))
 
-    # Transfer neuron activation using the sigmoid function
-    def transfer(self, activation):
-        return 1.0 / (1.0 + exp(-activation))
+    def forwardPass(self, a):
+        for b, w in zip(self.b, self.W):
+            a = self.sigmoid(np.dot(w, a) + b)
 
-    # Forward propagate input to network output
-    def forwardPropagate(self, row):
-        inputs = row
-        for layer in self.layers:
-            newInputs = []
-            for neuron in layer:
-                activation = self.activate(neuron['weights'], inputs)
-                neuron['output'] = self.transfer(activation)
-                newInputs.append(neuron['output'])
+        return a
 
-            inputs = newInputs
+    def crossEntropyLoss(self, y, a):
+        return np.sum(np.nan_to_num(-y * np.log(a) - (1 - y) * np.log(1 - a)))
 
-        self.outputs = inputs
+    def updateMiniBatch(self, mini_batch, n):
+        sumGradsB = [np.zeros(b.shape) for b in self.b]
+        sumGradsW = [np.zeros(w.shape) for w in self.W]
 
-    def softmax(self):
-        return np.exp(self.outputs) / float(sum(np.exp(self.outputs)))
-        # self.outputs = (
-        #    np.exp(self.outputs) / np.sum(np.exp(self.outputs), axis=0)
-        # )
-        # return result
-        # for i in range(self.NUM_OUTPUTS):
-        #    self.layers[len(self.layers) - 1][i]['output'] = result[i]
+        for x in mini_batch:
+            gradsB, gradsW = self.backpropagation(x[:-1], x[-1])
+            sumGradsB = [sumB + gradB for sumB, gradB in zip(sumGradsB, gradsB)]
+            sumGradsW = [sumW + gradW for sumW, gradW in zip(sumGradsW, gradsW)]
 
-    def oneHotEncoding(self, expected):
-        maxIdx = 9
-        encoded = [0.0 for i in range(maxIdx + 1)]
-        encoded[expected] = 1.0
+        self.W = [w - (self.alpha * sumW / len(mini_batch)) for w, sumW in zip(self.W, sumGradsW)]
+        self.b = [b - (self.alpha * sumB / len(mini_batch)) for b, sumB in zip(self.b, sumGradsB)]
+
+    def derivative(self, z, a, y):
+        return (a - y) * self.sigmoidPrime(z)
+
+    def oneHotEncoding(self, y):
+        encoded = np.zeros((self.NUM_OUTPUTS, 1))
+        encoded[int(y)] = 1.0
         return encoded
 
-    # Calculate the derivative of an neuron output
-    def transferDerivative(self, output):
-        return output * (1.0 - output)
+    def predict(self, output, y):
+        softmax = np.exp(output) / float(sum(np.exp(output)))
+        if np.argmax(softmax) == np.argmax(y):
+            self.correct += 1
 
-    def calculateLoss(self, expected):
-        # output = [l['output'] for l in self.layers[len(self.layers) - 1]]
-        output = self.outputs
-        error = 0.0
-        for i in range(self.NUM_OUTPUTS):
-            e1 = (-1.0) * expected[i] * log(output[i], 10)
-            e2 = (1.0 - expected[i]) * log(1 - output[i], 10)
-            error += e1 - e2
+    def backpropagation(self, x, y):
+        gradsB = [np.zeros(b.shape) for b in self.b]
+        gradsW = [np.zeros(w.shape) for w in self.W]
 
-        return error
+        x = x.reshape(self.NUM_INPUTS, 1)
+        y = self.oneHotEncoding(y)
 
-    # Backpropagate error and store in neurons
-    def backPropagate(self, expected):
-        for i in reversed(range(len(self.layers))):
-            layer = self.layers[i]
-            errors = list()
-            if i != len(self.layers) - 1:
-                for j in range(len(layer)):
-                    error = 0.0
-                    for neuron in self.layers[i + 1]:
-                        error += (neuron['weights'][j] * neuron['delta'])
+        # feedforward
+        activation = x
+        activations = [x]  # list to store all the activations, layer by layer
+        zs = []  # list to store all the z vectors, layer by layer
 
-                    errors.append(error)
-            else:
-                for j in range(len(layer)):
-                    neuron = layer[j]
-                    errors.append(expected[j] - neuron['output'])
+        for b, w in zip(self.b, self.W):
+            z = np.dot(w, activation) + b
+            zs.append(z)
+            activation = self.sigmoid(z)
+            activations.append(activation)
 
-            for j in range(len(layer)):
-                neuron = layer[j]
-                # neuron['delta'] = errors[j]
-                neuron['delta'] = (
-                    errors[j] * self.transferDerivative(neuron['output'])
-                )
+        self.cost += self.crossEntropyLoss(y, activation)
+        self.predict(activation, y)
 
-    # Update network weights with error
-    def updateWeights(self, inputs, update=False, batchSize=1):
-        for i in range(len(self.layers)):
-            if i != 0:
-                inputs = [neuron['output'] for neuron in self.layers[i - 1]]
+        # backward pass
+        delta = self.derivative(zs[-1], activations[-1], y)
+        gradsB[-1] = delta
+        gradsW[-1] = np.dot(delta, activations[-2].transpose())
 
-            for j in range(len(self.layers[i])):
-                neuron = self.layers[i][j]
-                for k in range(len(inputs)):
-                    self.deltas[i][j] += neuron['delta'] * inputs[k]
-                    delta = self.deltas[i][j]
-                    if update:
-                        neuron['weights'][k] += self.lmbda * delta / batchSize
+        for l in range(2, self.NUM_LAYERS):
+            z = zs[-l]
+            sp = self.sigmoidPrime(z)
+            delta = np.dot(self.W[-l+1].transpose(), delta) * sp
+            gradsB[-l] = delta
+            gradsW[-l] = np.dot(delta, activations[-l-1].transpose())
 
-                self.deltas[i][-1] += neuron['delta']
-                delta = self.deltas[i][-1]
-                if update:
-                    neuron['weights'][-1] += self.lmbda * delta / batchSize
+        return (gradsB, gradsW)
 
-    def predict(self):
-        return np.argmax(self.softmax())
+    def gradientDescent(self, trainingSet, batchSize):
+        trainingCost = []
+        data = trainingSet.data
 
-    # Train a network for a fixed number of epochs
-    def sgd2(self, trainingSet):
-        for epoch in range(self.numEpochs):
-            lossSum = 0
-            correct = 0
-            # for row in trainingSet:
-            for k in range(trainingSet.size):
-                row = trainingSet.inputs[k]
-                expected = self.oneHotEncoding(trainingSet.outputs[k])
+        for epoch in range(self.nEpochs):
+            random.shuffle(data)
+            self.cost = 0.0
+            self.correct = 0
+            batches = [data[k: k + batchSize] for k in range(0, trainingSet.size, batchSize)]
 
-                self.forwardPropagate(row)
+            for batch in batches:
+                self.updateMiniBatch(batch, trainingSet.size)
 
-                lossSum += self.calculateLoss(expected)
-                prediction = self.predict()
-
-                if prediction == trainingSet.outputs[k]:
-                    correct += 1
-                self.backPropagate(expected)
-                self.updateWeights(row)
-
-            lossSum /= trainingSet.size
-
-            print('> epoch=%d, lrate=%.3f, error=%.3f' % (
-                epoch, self.lmbda, lossSum
-            ))
-            print('< score: %d/%d' % (correct, trainingSet.size))
-
-    def initDeltas(self):
-        self.deltas = list()
-        for i in range(len(self.layers)):
-            self.deltas.append([0] * len(self.layers[i]))
-
-    def batchGD(self, trainingSet, batchSize, sg=True):
-        for epoch in range(self.numEpochs):
-            self.initDeltas()
-            lossSum = 0
-            correct = 0
-
-            for k in range(trainingSet.size):
-                row = trainingSet.inputs[k]
-                expected = self.oneHotEncoding(trainingSet.outputs[k])
-
-                self.forwardPropagate(row)
-
-                lossSum += self.calculateLoss(expected)
-                if self.predict() == trainingSet.outputs[k]:
-                    correct += 1
-
-                self.backPropagate(expected)
-
-                if (k + 1) % batchSize == 0:
-                    if sg:
-                        self.updateWeights(row, True)
-                    else:
-                        self.updateWeights(row, True, batchSize)
-
-                    self.initDeltas()
-                else:
-                    self.updateWeights(row)
-
-            lossSum /= trainingSet.size
-
-            print('> epoch=%d, lrate=%.3f, error=%.3f' % (
-                epoch, self.lmbda, lossSum
-            ))
-            print('< score: %d/%d' % (correct, trainingSet.size))
-
-    def gd(self, trainingSet):
-        self.batchGD(trainingSet, trainingSet.size, True)
-
-    def sgd(self, trainingSet):
-        self.batchGD(trainingSet, 1)
-
-    def miniBatch(self, trainingSet, batchSize):
-        self.batchGD(trainingSet, batchSize)
+            avgCost = self.cost / trainingSet.size
+            trainingCost.append(avgCost)
+            print('> epoch=%d, error=%.3f' % (epoch, avgCost))
+            print('< correct=%d/%d' % (self.correct, trainingSet.size))
